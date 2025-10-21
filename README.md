@@ -27,26 +27,22 @@ Before starting the assignment, ensure you have the following software installed
 
 ### **1. Project Structure**
 
-Ensure your project directory follows the structure below:
+The project directory follows the structure below:
 
 ```
 ride-sharing-analytics/
-├── outputs/
-│   ├── task_1
-│   |    └── CSV files of task 1.
-|   ├── task_2
-│   |    └── CSV files of task 2.
-|   └── task_3
-│       └── CSV files of task 3.
-├── task1.py
-├── task2.py
-├── task3.py
 ├── data_generator.py
+├── task4.py
+├── task5.py
+├── task4_screenshot.png
+├── task5_screenshot.png
+├── data_generator.py
+├──training-dataset.csv
+├──models/
 └── README.md
 ```
 
 - **data_generator.py/**: generates a constant stream of input data of the schema (trip_id, driver_id, distance_km, fare_amount, timestamp)  
-- **outputs/**: CSV files of processed data of each task stored in respective folders.
 - **README.md**: Assignment instructions and guidelines.
   
 ---
@@ -55,106 +51,119 @@ ride-sharing-analytics/
 
 You can run the analysis tasks either locally.
 
-1. **Execute Each Task **: The data_generator.py should be continuosly running on a terminal. open a new terminal to execute each of the tasks.
+1. **Execute Each Task** : The data_generator.py should be continuosly running on a terminal. open a new terminal to execute each of the tasks.
    ```bash
      python data_generator.py
-     python task1.py
-     python task2.py
-     python task3.py
+     python task4.py
+     python task5.py
    ```
 
 2. **Verify the Outputs**:
-   Check the `outputs/` directory for the resulting files:
-   ```bash
-   ls outputs/
-   ```
-
+   Check the terminal for the results
 ---
-
+# **Task4**
 ## **Overview**
 
-In this assignment, we will build a real-time analytics pipeline for a ride-sharing platform using Apache Spark Structured Streaming. we will process streaming data, perform real-time aggregations, and analyze trends over time.
+This task demonstrates how to build a real-time fare prediction pipeline using PySpark’s Structured Streaming and MLlib.
+The goal is to train a simple Linear Regression model that predicts taxi fares (fare_amount) based on trip distance (distance_km), and then use that trained model to make real-time predictions on streaming data.
 
-## **Objectives**
+**The pipeline consists of two main phases:**
 
-By the end of this assignment, you should be able to:
+**Offline Model Training**
 
-1. Task 1: Ingest and parse real-time ride data.
-2. Task 2: Perform real-time aggregations on driver earnings and trip distances.
-3. Task 3: Analyze trends over time using a sliding time window.
+* Loads historical training data from training-dataset.csv.
 
+* Casts the columns distance_km and fare_amount to DoubleType for numerical processing.
+
+* Uses a VectorAssembler to convert distance_km into a features vector required by Spark MLlib models.
+
+* Trains a Linear Regression model using distance_km as the feature and fare_amount as the label.
+
+* Saves the trained model to models/fare_model for reuse during streaming inference.
+
+**Streaming Inference**
+
+* Reads live trip data as JSON from a socket stream (e.g., via localhost:9999).
+
+* Parses the incoming stream using a defined schema.
+
+* Loads the pre-trained Linear Regression model from disk.
+
+* Uses the same VectorAssembler transformation on the streaming data to ensure consistency with the training phase.
+
+* Generates real-time fare predictions using the model.
+
+* Calculates the deviation between the actual fare_amount and the predicted fare using an absolute difference (abs_diff).
+
+* Outputs a live stream of results to the console.
+
+## Key Features
+
+* End-to-End Workflow: Integrates offline model training and real-time inference in a single pipeline.
+
+* Consistent Feature Engineering: Ensures the same preprocessing steps (VectorAssembler) are applied in both training and inference.
+
+* Streaming Data Processing: Reads and processes JSON-formatted data in real time using Spark Structured Streaming.
+
+* Model Reusability: Automatically detects existing models to avoid unnecessary retraining.
+
+* Real-Time Evaluation: Computes a live deviation metric between predicted and actual fares to monitor model accuracy.
+
+* Scalable Design: Can easily be extended to include more features or advanced ML models.
+  
+## *Sample Output*
+<img width="2128" height="842" alt="Screenshot 2025-10-21 123151" src="https://github.com/user-attachments/assets/a0023ea8-d5fa-468e-acd2-932b51201411" />
 ---
+---
+# **Task5**
+## **Overview**
 
-## **Task 1: Basic Streaming Ingestion and Parsing**
+This project demonstrates offline model training and real-time streaming inference for predicting average taxi fares using PySpark’s Structured Streaming and MLlib. The workflow aggregates fare data into 5-minute windows and trains a Linear Regression model using time-based features.
 
-1. Ingest streaming data from the provided socket (e.g., localhost:9999) using Spark Structured Streaming.
-2. Parse the incoming JSON messages into a Spark DataFrame with proper columns (trip_id, driver_id, distance_km, fare_amount, timestamp).
+**The pipeline consists of two main phases:**
 
-## **Logic Flow:**
-The task1.py script is the foundational data pipeline. It reads raw JSON data strings directly from the streaming source (TCP socket), parses them into a structured DataFrame using a predefined schema, and then writes the records to a target directory in CSV format. It operates in append output mode and uses a 5-second processing time trigger.
+**Offline Model Training**
 
-1. Initialize Spark Session: Creates a Spark session named RideSharingAnalytics.
-2. Define Schema: Defines the StructType schema for the incoming ride-sharing JSON records (trip ID, driver ID, distance, fare, timestamp).
-3. Read Stream: Connects to the TCP socket (localhost:9999) using spark.readStream.
-4. Parse Data: Uses from_json to parse the raw string value column into structured columns based on the schema.
-5. Start Query: Initiates the streaming query using writeStream with:
-6. outputMode("append"): Writes only new records to the sink.
-7. format("csv"): Specifies the output format.
-8. trigger(processingTime='5 seconds'): Processes a batch of data every 5 seconds.
+* Loads historical fare data (training-dataset.csv).
+
+* Aggregates fare data into 5-minute windows.
+
+* Extracts hour-of-day and minute-of-hour features from the window start time.
+
+* Trains a Linear Regression model to predict average fare.
+
+* Saves the trained model to models/fare_trend_model_v2.
+
+**Streaming Inference**
+
+* Reads real-time fare data from a socket stream in JSON format.
+
+* Applies the same 5-minute windowed aggregation.
+
+* Extracts the same time-based features for prediction.
+
+* Loads the pre-trained model and outputs:
+
+   * Window start and end times
+
+   * Actual average fare
+
+   * Predicted next average fare
+
+* Prints results to the console in real time.
+
+## Key Features
+
+* Uses PySpark MLlib for regression modeling.
+
+* Handles streaming data using Structured Streaming.
+
+* Extracts time-based features from aggregated windows.
+
+* Predicts average fare trends in real time.
+
+* Automatically checks for existing trained models to save computation time.
 
 ## *Sample Output*
-<img width="609" height="152" alt="image" src="https://github.com/user-attachments/assets/16df3fde-7e53-4d46-ba52-3d7294eb3b74" />
-
----
-
-## **Task 2: Real-Time Aggregations (Driver-Level)**
-
-1. Aggregate the data in real time to answer the following questions:
-  • Total fare amount grouped by driver_id.
-  • Average distance (distance_km) grouped by driver_id.
-2. Output these aggregations to the console in real time.
-
-## **Logic Flow:**
-
-1. Setup & Parsing: Steps 1-4 are similar to Task 1 (initialization, schema definition, reading, and parsing).
-2. Timestamp Conversion & Watermarking: Converts the timestamp string to TimestampType and applies a 10-minute watermark to manage event-time skew.
-3. Aggregation: Groups the data by driver_id and calculates:
-     sum(fare_amount) as total_fare.
-     avg(distance_km) as avg_distance.
-4. Start Query: Initiates the streaming query using writeStream with:
-     outputMode("complete"): Rewrites the entire state (all drivers' current totals) on every batch.
-     foreachBatch(save_to_csv): Custom function to write each batch's result to CSV.
-     trigger(processingTime="10 seconds"): Processes a batch of data every 10 seconds.
-
-## **Sample Output**
-<img width="331" height="596" alt="image" src="https://github.com/user-attachments/assets/c1df8f16-d2d6-40ed-b7ad-245424df6131" />
-
----
-
-## **Task 3: Windowed Time-Based Analytics**
-
-1. Convert the timestamp column to a proper TimestampType.
-2. Perform a 5-minute windowed aggregation on fare_amount (sliding by 1 minute and watermarking by 1 minute).
-
-## **Instructions:**
-
-1. Convert the string-based timestamp column to a TimestampType column (e.g., event_time).
-2. Use Spark’s window function to aggregate over a 5-minute window, sliding by 1 minute, for the sum of fare_amount.
-3. Output the windowed results to csv.
-
-## **Logic Flow**
-
-1. Timestamp Conversion & Watermarking: Converts the timestamp string and applies a 1-minute watermark.
-2. Windowed Aggregation: Groups the data by a time window:
-    Uses window(col("timestamp"), "1 minute", "1 minute"). This defines a 1-minute window that slides forward by 1 minute, creating non-overlapping (tumbling) windows.
-    Calculates avg(col("fare_amount")) as window_avg_fare.
-3. Output Selection: Extracts the window.start and window.end columns to explicitly show the aggregation period.
-4. Start Query: Initiates the streaming query using writeStream with:
-    outputMode("append"): Writes a new aggregate row every time a 1-minute window is closed and calculated.
-    foreachBatch(save_to_csv): Custom function to write each batch's result to a unique output directory.
-    trigger(processingTime="10 seconds"): Processes a batch of data every 10 seconds.
-
-## **Sample Output**
-<img width="498" height="71" alt="image" src="https://github.com/user-attachments/assets/71119f09-168f-4bfa-83fa-11aea3f85209" />
-
+<img width="1665" height="354" alt="Screenshot 2025-10-21 123056" src="https://github.com/user-attachments/assets/8002417c-7ac0-4efd-9a58-d5f07b12506a" />
 ---
