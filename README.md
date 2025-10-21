@@ -113,9 +113,12 @@ The goal is to train a simple Linear Regression model that predicts taxi fares (
   
 ## *Sample Output*
 <img width="2128" height="842" alt="Screenshot 2025-10-21 123151" src="https://github.com/user-attachments/assets/a0023ea8-d5fa-468e-acd2-932b51201411" />
+
 ---
----
+
+
 # **Task5**
+
 ## **Overview**
 
 This project demonstrates offline model training and real-time streaming inference for predicting average taxi fares using PySpark’s Structured Streaming and MLlib. The workflow aggregates fare data into 5-minute windows and trains a Linear Regression model using time-based features.
@@ -166,4 +169,5 @@ This project demonstrates offline model training and real-time streaming inferen
 
 ## *Sample Output*
 <img width="1665" height="354" alt="Screenshot 2025-10-21 123056" src="https://github.com/user-attachments/assets/8002417c-7ac0-4efd-9a58-d5f07b12506a" />
+
 ---
